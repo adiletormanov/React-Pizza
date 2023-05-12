@@ -1,0 +1,57 @@
+//17  урок
+import axios from 'axios';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+
+export const fetchPizzas = createAsyncThunk(
+  //17 № с помощью этой функции мы создаем ассинхронный экшен. т.е. pizza должна делать какое то ассинхронное действие
+  'pizza/fetchPizzasStatus',
+  async (params) => {
+		const {
+			sortBy,
+			order,
+			category,
+			search,
+			currentPage,
+		} = params;
+    const {data} = await axios.get( // в ассинхронным действии делаем запрос
+      `https://6433e582582420e2316e5607.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`,
+    );
+    return data; // когда запрос выполниться верни мне ответ
+  },
+);
+
+const initialState = {
+  items: [],
+	status: 'loading', // loading | succes | error
+};
+
+const pizzaSlice = createSlice({
+  name: 'pizza',
+  initialState,
+  reducers: {
+    setItems(state, action) {
+      state.items = action.payload;
+    },
+  },
+
+	extraReducers: { // действие fetchPizzas которое выше его передали в extraReducers
+		[fetchPizzas.pending]: (state) => {
+			state.status = 'loading';
+			state.items = [];
+		},
+		[fetchPizzas.fulfilled]: (state, action) => {
+			state.items = action.payload;
+			state.status = 'success';
+		},
+		[fetchPizzas.rejected]: (state, action) => {
+			state.status = 'error';
+			state.items = [];
+		},
+	},
+
+});
+
+export const selectPizzaData = (state) => state.pizza;
+export const { setItems } = pizzaSlice.actions;
+
+export default pizzaSlice.reducer;
